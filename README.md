@@ -5,16 +5,16 @@ This folder is a static GitHub Pages package for the podcast visualization proje
 ## Structure
 
 - `index.html`: the multi-episode landing page, Beneath the Conversation.
-- `s8e1/index.html`: the S8E1 single-episode dashboard.
-- `s8e1/S8E1.m4a`: local audio used by the S8E1 dashboard.
+- `episodes/<episode-id>/index.html`: one single-episode dashboard per episode.
+- `s8e1/index.html`: compatibility copy of the S8E1 dashboard.
 - `.nojekyll`: prevents GitHub Pages from filtering static assets.
 
 ## Interaction
 
-Clicking any tree on the landing page opens the S8E1 dashboard:
+Clicking a tree on the landing page opens the corresponding episode dashboard:
 
 ```
-index.html -> s8e1/index.html
+index.html -> episodes/<episode-id>/index.html
 ```
 
 ## Deploy to GitHub Pages

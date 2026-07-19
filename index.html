@@ -38230,7 +38230,13 @@ function globalScales() {
 
 function drawEpisodeTree(svg, episode, treeX, yScaleFn, scales) {
   const treeTopY = yScaleFn(episode.play_count || 0);
-  const group = svgEl("g", { class: "episode-tree", transform: `translate(${treeX} 0)` });
+  const group = svgEl("g", {
+    class: "episode-tree",
+    transform: `translate(${treeX} 0)`,
+    "data-episode-id": episode.episode_id || episode.episode_label || "",
+    "data-source-episode-number": episode.source_episode_number || "",
+    "data-episode-url": `episodes/${String(episode.episode_id || episode.episode_label || "").toLowerCase()}/index.html`
+  });
   svg.appendChild(group);
 
   const rootHeight = scales.durationHeight(episode.episode_duration_minutes || 0);
@@ -38598,22 +38604,25 @@ init().catch((error) => {
   
 <script>
 (() => {
-  const DETAIL_URL = "s8e1/index.html";
+  const fallbackUrl = "s8e1/index.html";
   const svg = document.getElementById("vizSvg");
   if (!svg) return;
+
+  const episodeUrl = (tree) => tree?.dataset?.episodeUrl || fallbackUrl;
 
   const markTrees = () => {
     svg.querySelectorAll(".episode-tree").forEach((tree) => {
       tree.style.cursor = "pointer";
       tree.setAttribute("role", "link");
       tree.setAttribute("tabindex", "0");
-      tree.setAttribute("aria-label", "Open S8E1 episode dashboard");
+      const episodeId = tree.dataset.episodeId || "episode";
+      tree.setAttribute("aria-label", "Open " + episodeId + " episode dashboard");
     });
   };
 
   svg.addEventListener("click", (event) => {
     const tree = event.target.closest?.(".episode-tree");
-    if (tree) window.location.href = DETAIL_URL;
+    if (tree) window.location.href = episodeUrl(tree);
   });
 
   svg.addEventListener("keydown", (event) => {
@@ -38621,7 +38630,7 @@ init().catch((error) => {
     if (!tree) return;
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
-      window.location.href = DETAIL_URL;
+      window.location.href = episodeUrl(tree);
     }
   });
 
