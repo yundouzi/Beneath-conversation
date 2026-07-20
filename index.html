@@ -182,8 +182,8 @@ body {
   position: absolute;
   right: 54px;
   top: 58px;
-  width: 440px;
-  height: 86px;
+  width: 417px;
+  height: 79px;
   z-index: 5;
 }
 
@@ -231,6 +231,22 @@ body {
 
 .viz-svg {
   display: block;
+}
+
+.episode-tree {
+  outline: none;
+}
+
+.episode-hover-highlight {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+}
+
+.episode-tree:hover .episode-hover-highlight,
+.episode-tree:focus .episode-hover-highlight,
+.episode-tree:focus-visible .episode-hover-highlight {
+  opacity: 1;
 }
 
 svg text {
@@ -303,7 +319,7 @@ svg text {
       </section>
 
       <section class="overview-panel" aria-label="Episode range overview">
-        <svg id="overviewSvg" width="440" height="86"></svg>
+        <svg id="overviewSvg" width="417" height="79" viewBox="0 0 417 79"></svg>
       </section>
 
       <section class="viz-shell" aria-label="Interactive visualization">
@@ -38179,10 +38195,29 @@ function drawDashboard() {
 function drawEpisodeTrees(yScaleFn) {
   clear(vizSvg);
   const scales = globalScales();
+  drawSvgDefs(vizSvg);
   drawTimelineBackground(vizSvg, Number(vizSvg.getAttribute("width") || 0));
   episodes.forEach((episode, index) => {
     drawEpisodeTree(vizSvg, episode, getTreeX(index), yScaleFn, scales);
   });
+}
+
+function drawSvgDefs(svg) {
+  const defs = svgEl("defs");
+  const filter = svgEl("filter", {
+    id: "episode-hover-glow",
+    x: "-80%",
+    y: "-12%",
+    width: "260%",
+    height: "124%",
+    colorInterpolationFilters: "sRGB"
+  });
+  filter.appendChild(svgEl("feGaussianBlur", {
+    in: "SourceGraphic",
+    stdDeviation: 18
+  }));
+  defs.appendChild(filter);
+  svg.appendChild(defs);
 }
 
 function drawTimelineBackground(svg, width) {
@@ -38239,6 +38274,8 @@ function drawEpisodeTree(svg, episode, treeX, yScaleFn, scales) {
   });
   svg.appendChild(group);
 
+  drawEpisodeHighlight(group, treeTopY);
+
   const rootHeight = scales.durationHeight(episode.episode_duration_minutes || 0);
   const rootTop = TREE_BASE_Y - rootHeight;
   group.appendChild(svgEl("polygon", {
@@ -38280,6 +38317,34 @@ function drawEpisodeTree(svg, episode, treeX, yScaleFn, scales) {
   title.textContent = `${episode.episode_label} ${episode.guest}\nListens: ${formatCount(episode.play_count)}\nDuration: ${Math.round(episode.episode_duration_minutes)} min`;
   hit.appendChild(title);
   group.appendChild(hit);
+}
+
+function drawEpisodeHighlight(group, treeTopY) {
+  const bottom = TIMELINE_TOP_Y + TIMELINE_HEIGHT + 70;
+  const top = Math.max(44, treeTopY - 18);
+  const height = bottom - top;
+  const highlight = svgEl("g", {
+    class: "episode-hover-highlight",
+    "aria-hidden": "true"
+  });
+  highlight.appendChild(svgEl("ellipse", {
+    cx: 0,
+    cy: top + height / 2,
+    rx: 28,
+    ry: Math.max(180, height / 2),
+    fill: "#FFFFFF",
+    opacity: 0.79,
+    filter: "url(#episode-hover-glow)"
+  }));
+  highlight.appendChild(svgEl("rect", {
+    x: -58,
+    y: top,
+    width: 116,
+    height,
+    fill: "#FFFFFF",
+    opacity: 0.10
+  }));
+  group.appendChild(highlight);
 }
 
 function bubblePositions(treeTopY) {
@@ -38452,63 +38517,77 @@ function drawEpisodeLabels(group, episode) {
 
 function drawOverview() {
   clear(overviewSvg);
-  const w = 440;
-  const y = 48;
-  overviewSvg.appendChild(svgEl("rect", { x: 24, y: y - 11, width: w - 48, height: 22, fill: COLORS.olive10 }));
-  overviewSvg.appendChild(svgEl("line", { x1: 24, x2: w - 24, y1: y, y2: y, stroke: COLORS.olive21, "stroke-width": 7, opacity: 0.75 }));
-  const labels = [["S3E1", 24], ["S9E4", w - 24]];
-  labels.forEach(([text, x]) => {
-    overviewSvg.appendChild(svgEl("line", { x1: x, x2: x, y1: y - 24, y2: y + 24, stroke: COLORS.taupe, "stroke-width": 7 }));
-    const t = svgEl("text", { x, y: y - 16, fill: COLORS.taupe, "font-size": 13, "text-anchor": "middle" });
+  const trackX = 10.9414;
+  const trackY = 29.0299;
+  const trackW = 393.496;
+  const trackH = 14.3363;
+  const markerTop = 20.1807;
+  const markerBottom = 54.2695;
+  overviewSvg.appendChild(svgEl("rect", {
+    x: trackX,
+    y: trackY,
+    width: trackW,
+    height: trackH,
+    fill: COLORS.olive10
+  }));
+  [["S3E1", 0, 13, "start"], ["S9E4", 417, 13, "end"]].forEach(([text, x, y, anchor]) => {
+    const t = svgEl("text", { x, y, fill: COLORS.taupe, "font-size": 13, "text-anchor": anchor });
     t.textContent = text;
     overviewSvg.appendChild(t);
   });
-  const caption = svgEl("text", { x: 24, y: 18, fill: COLORS.darkBrown, "font-size": 16, class: "axis-title" });
-  caption.textContent = "Episode Range";
-  overviewSvg.appendChild(caption);
+  overviewSvg.appendChild(svgEl("rect", {
+    x: 10.9414,
+    y: markerTop,
+    width: 6.09375,
+    height: markerBottom - markerTop,
+    fill: COLORS.taupe
+  }));
+  overviewSvg.appendChild(svgEl("rect", {
+    x: 398.348,
+    y: markerTop,
+    width: 6.09,
+    height: markerBottom - markerTop,
+    fill: COLORS.taupe
+  }));
   overviewSvg.appendChild(svgEl("rect", {
     id: "overviewWindow",
-    x: 24,
-    y: y - 12,
-    width: 80,
-    height: 24,
+    x: 244.703,
+    y: markerTop,
+    width: 124.564,
+    height: markerBottom - markerTop,
     fill: COLORS.olive10,
-    stroke: COLORS.brown50,
-    "stroke-width": 1
   }));
   overviewSvg.appendChild(svgEl("text", {
     id: "overviewFirstLabel",
-    x: 24,
-    y: y - 20,
+    x: 244.703,
+    y: 75.1865,
     fill: COLORS.taupe,
-    "font-size": 12,
+    "font-size": 13,
     "text-anchor": "middle"
   }));
   overviewSvg.appendChild(svgEl("text", {
     id: "overviewLastLabel",
-    x: 104,
-    y: y - 20,
+    x: 367.582,
+    y: 75.1865,
     fill: COLORS.taupe,
-    "font-size": 12,
+    "font-size": 13,
     "text-anchor": "middle"
   }));
-  overviewSvg.appendChild(svgEl("line", {
+  overviewSvg.appendChild(svgEl("rect", {
     id: "overviewFirstTick",
-    x1: 24,
-    x2: 24,
-    y1: y - 24,
-    y2: y + 24,
-    stroke: COLORS.taupe,
-    "stroke-width": 2
+    x: 244.703,
+    y: markerTop,
+    width: 1.68,
+    height: markerBottom - markerTop,
+    fill: COLORS.taupe
   }));
-  overviewSvg.appendChild(svgEl("line", {
+  overviewSvg.appendChild(svgEl("rect", {
     id: "overviewLastTick",
-    x1: 104,
-    x2: 104,
-    y1: y - 24,
-    y2: y + 24,
-    stroke: COLORS.taupe,
-    "stroke-width": 2
+    x: 367.582,
+    y: markerTop,
+    width: 1.68445,
+    height: markerBottom - markerTop,
+    fill: COLORS.taupe
   }));
 }
 
@@ -38517,8 +38596,8 @@ function updateOverview() {
   if (!rect) return;
   const totalWidth = Number(vizSvg.getAttribute("width") || 1);
   const maxScroll = Math.max(1, totalWidth - scrollArea.clientWidth);
-  const trackX = 24;
-  const trackW = 392;
+  const trackX = 10.9414;
+  const trackW = 393.496;
   const windowW = Math.max(34, (scrollArea.clientWidth / totalWidth) * trackW);
   const x = trackX + (scrollArea.scrollLeft / maxScroll) * (trackW - windowW);
   rect.setAttribute("x", x);
@@ -38540,12 +38619,10 @@ function updateOverview() {
     rightLabel.setAttribute("x", x2);
   }
   if (leftTick) {
-    leftTick.setAttribute("x1", x);
-    leftTick.setAttribute("x2", x);
+    leftTick.setAttribute("x", x);
   }
   if (rightTick) {
-    rightTick.setAttribute("x1", x2);
-    rightTick.setAttribute("x2", x2);
+    rightTick.setAttribute("x", x2);
   }
 }
 
