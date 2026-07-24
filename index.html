@@ -5,10 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Beneath the Conversation</title>
     <style>
+@font-face {
+  font-family: "Frutiger Dashboard Light";
+  src: url("./fonts/FrutigerLTProLight.otf") format("opentype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Frutiger Dashboard Bold Condensed";
+  src: url("./fonts/FrutigerLTProBoldCn.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Frutiger Dashboard Black Condensed";
+  src: url("./fonts/FrutigerLTProBlackCn.otf") format("opentype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Frutiger Dashboard Roman";
+  src: url("./fonts/FrutigerLTProRoman.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
 :root {
-  --font-light: "Frutiger LT Pro 45 Light", "Frutiger LT Pro", Arial, sans-serif;
-  --font-bold-condensed: "Frutiger LT Pro 67 Bold Condensed", "Frutiger LT Pro", Arial, sans-serif;
-  --font-black-condensed: "Frutiger LT Pro 77 Black Condensed", "Frutiger LT Pro", Arial, sans-serif;
+  --font-light: "Frutiger Dashboard Light", "Frutiger LT Pro 45 Light", "Frutiger LT Pro", Arial, sans-serif;
+  --font-roman: "Frutiger Dashboard Roman", "Frutiger LT Pro 55 Roman", "Frutiger LT Pro", Arial, sans-serif;
+  --font-bold-condensed: "Frutiger Dashboard Bold Condensed", "Frutiger LT Pro 66 Bold Condensed", "Frutiger LT Pro 67 Bold Condensed", "Frutiger LT Pro", Arial, sans-serif;
+  --font-black-condensed: "Frutiger Dashboard Black Condensed", "Frutiger LT Pro 77 Black Condensed", "Frutiger LT Pro", Arial, sans-serif;
   --orange: #DFA870;
   --taupe: #A29479;
   --green: #80CA68;
@@ -22,6 +55,7 @@
   --gray: #B9B4B6;
   --background: #F5EEE0;
   --scale: 1;
+  --stage-width: 1920px;
 }
 
 * {
@@ -47,9 +81,9 @@ body {
 
 .stage {
   position: relative;
-  width: 1920px;
+  width: var(--stage-width);
   height: 1080px;
-  min-width: 1920px;
+  min-width: var(--stage-width);
   min-height: 1080px;
   overflow: hidden;
   background: var(--background);
@@ -72,7 +106,7 @@ body {
   font-family: var(--font-black-condensed);
   font-size: 63px;
   line-height: 0.94;
-  letter-spacing: -1.9px;
+  letter-spacing: 0;
   text-transform: none;
 }
 
@@ -82,15 +116,19 @@ body {
   font-family: var(--font-bold-condensed);
   font-size: 32px;
   line-height: 1.02;
-  letter-spacing: -0.8px;
+  letter-spacing: 0;
 }
 
 .description {
   margin: 20px 0 0 0;
   width: 320px;
   color: var(--brown50);
+  font-family: var(--font-light);
+  font-weight: 300;
   font-size: 13px;
   line-height: 1.22;
+  letter-spacing: normal;
+  word-spacing: normal;
 }
 
 .section-label {
@@ -98,7 +136,7 @@ body {
   color: var(--darkBrown);
   font-family: var(--font-bold-condensed);
   font-size: 24px;
-  letter-spacing: -0.3px;
+  letter-spacing: 0;
 }
 
 .legend-block {
@@ -106,19 +144,19 @@ body {
 }
 
 .category-block {
-  margin-top: 14px;
+  margin-top: 24px;
 }
 
 .category-table {
   width: 378px;
   border-collapse: collapse;
   color: var(--darkBrown);
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.08;
 }
 
 .category-table th {
-  padding: 0 0 8px 0;
+  padding: 0 0 10px 0;
   border-bottom: 1px solid var(--brown50);
   color: var(--darkBrown);
   font-family: var(--font-bold-condensed);
@@ -127,16 +165,20 @@ body {
 }
 
 .category-table td {
-  padding: 7px 8px 6px 0;
+  padding: 9px 8px 8px 0;
   border-bottom: 1px solid var(--olive21);
   color: var(--brown50);
+  font-family: var(--font-light);
+  font-weight: 300;
+  letter-spacing: normal;
+  word-spacing: normal;
   vertical-align: top;
 }
 
 .category-table td:first-child {
   width: 150px;
   color: var(--darkBrown);
-  font-family: var(--font-bold-condensed);
+  font-family: var(--font-light);
 }
 
 .dot {
@@ -168,14 +210,18 @@ body {
   color: var(--darkBrown);
   font-family: var(--font-bold-condensed);
   font-size: 18px;
-  letter-spacing: -0.4px;
+  letter-spacing: 0;
 }
 
 .top-intro p {
   margin: 0 0 10px 0;
   color: var(--brown50);
-  font-size: 14px;
+  font-family: var(--font-light);
+  font-weight: 300;
+  font-size: 13px;
   line-height: 1.32;
+  letter-spacing: normal;
+  word-spacing: normal;
 }
 
 .overview-panel {
@@ -191,9 +237,9 @@ body {
   position: absolute;
   left: 480px;
   top: 174px;
-  width: 1396px;
+  width: calc(var(--stage-width) - 524px);
   height: 860px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .axis-svg {
@@ -208,7 +254,7 @@ body {
   position: absolute;
   left: 0;
   top: 0;
-  width: 1396px;
+  width: calc(var(--stage-width) - 602px);
   height: 860px;
   overflow-x: auto;
   overflow-y: hidden;
@@ -254,11 +300,22 @@ svg text {
   fill: var(--taupe);
 }
 
+.axis-label,
+.axis-title,
+.episode-date,
+.overview-panel text {
+  font-family: var(--font-roman);
+}
+
 .axis-title,
 .episode-guest,
 .table-head,
 .legend-title {
   font-family: var(--font-bold-condensed);
+}
+
+.axis-title {
+  font-family: var(--font-roman);
 }
 
 .episode-label {
@@ -276,7 +333,7 @@ svg text {
     <main id="stage" class="stage" aria-label="Beneath the Conversation dashboard">
       <section class="left-panel" aria-label="Project introduction">
         <h1>Beneath the<br/>Conversation</h1>
-        <h2>A Multimodal<br/>Visualization of<br/>Conversational Podcasts</h2>
+        <h2>Amplifying Hidden<br/>Affective Structures in<br/>Podcast Dialogues</h2>
         <p class="description">
           The visualization shows the hidden thematic structure beneath conversational podcasts by combining topic categories,
           cross-categorized relationships, emotional tendencies, and temporal distributions into a single visual narrative.
@@ -285,7 +342,7 @@ svg text {
         </p>
         <div class="legend-block">
           <div class="section-label">Legend</div>
-          <svg id="legendSvg" width="360" height="215" role="img" aria-label="Legend"></svg>
+          <svg id="legendSvg" width="378" height="215" role="img" aria-label="Legend"></svg>
         </div>
         <div class="category-block">
           <div class="section-label">Topic Categories</div>
@@ -37888,7 +37945,7 @@ const EPISODE_SPACING = 128;
 const TREE_BASE_Y = 604;
 const TREE_TOP_MIN_Y = 88;
 const TREE_TOP_MAX_Y = 326;
-const TIMELINE_TOP_Y = 656;
+const TIMELINE_TOP_Y = 630;
 const TIMELINE_HEIGHT = 120;
 const MINI_TIMELINE_WIDTH = 42;
 const CATEGORY_COL_WIDTH = 5;
@@ -37971,6 +38028,7 @@ function formatCount(value) {
 let episodes = [];
 let scrollRaf = null;
 let globalPlayScale = null;
+const AXIS_AREA_WIDTH = 132;
 
 const stage = document.getElementById("stage");
 const scrollArea = document.getElementById("scrollArea");
@@ -37981,7 +38039,10 @@ const legendSvg = document.getElementById("legendSvg");
 
 function resizeStage() {
   const scale = Math.min(window.innerWidth / BASE_WIDTH, window.innerHeight / BASE_HEIGHT);
+  const stageWidth = Math.max(BASE_WIDTH, window.innerWidth / scale);
   document.documentElement.style.setProperty("--scale", String(scale));
+  document.documentElement.style.setProperty("--stage-width", `${stageWidth}px`);
+  axisSvg.setAttribute("width", Math.ceil(scrollArea.clientWidth + AXIS_AREA_WIDTH));
 }
 
 async function loadData() {
@@ -38049,15 +38110,15 @@ function drawStaticPanel() {
   g.appendChild(svgEl("line", { x1: cx - 52, x2: cx + 18, y1: 141, y2: 141, stroke: COLORS.brown50, "stroke-width": 1 }));
   g.appendChild(svgEl("line", { x1: cx - 52, x2: cx - 16, y1: 171, y2: 171, stroke: COLORS.brown50, "stroke-width": 1 }));
 
-  const l1 = svgEl("text", { x: 80, y: 25, fill: COLORS.taupe, "font-size": 10, "text-anchor": "end" });
+  const l1 = svgEl("text", { x: 116, y: 25, fill: COLORS.taupe, "font-size": 10, "text-anchor": "end" });
   l1.textContent = "Topic Duration";
   g.appendChild(l1);
-  g.appendChild(svgEl("line", { x1: 86, y1: 22, x2: cx - 28, y2: 22, stroke: COLORS.brown50, "stroke-width": 1 }));
+  g.appendChild(svgEl("line", { x1: 122, y1: 22, x2: cx - 28, y2: 22, stroke: COLORS.brown50, "stroke-width": 1 }));
 
-  const l2 = svgEl("text", { x: 80, y: 58, fill: COLORS.taupe, "font-size": 10, "text-anchor": "end" });
+  const l2 = svgEl("text", { x: 116, y: 58, fill: COLORS.taupe, "font-size": 10, "text-anchor": "end" });
   l2.textContent = "Positive Sentiment Ratio";
   g.appendChild(l2);
-  g.appendChild(svgEl("line", { x1: 86, y1: 55, x2: cx - 13, y2: 55, stroke: COLORS.brown50, "stroke-width": 1 }));
+  g.appendChild(svgEl("line", { x1: 122, y1: 55, x2: cx - 13, y2: 55, stroke: COLORS.brown50, "stroke-width": 1 }));
 
   const curve = svgEl("path", {
     d: `M ${cx - 5} ${top + 3} C ${cx + 40} ${top + 22}, ${cx + 24} 118, ${cx + 45} 121`,
@@ -38107,6 +38168,12 @@ function drawStaticPanel() {
 
 function drawGrid(yScale) {
   clear(axisSvg);
+  const chartWidth = scrollArea.clientWidth;
+  const chartRuleWidth = chartWidth + 2;
+  const axisTickX = chartWidth + 10;
+  const axisTitleX = chartWidth + 8;
+  const timelineLabelX = chartWidth + 8;
+  axisSvg.setAttribute("width", Math.ceil(chartWidth + AXIS_AREA_WIDTH));
   const grid = svgEl("g");
   axisSvg.appendChild(grid);
   const ticks = 5;
@@ -38115,7 +38182,7 @@ function drawGrid(yScale) {
     const y = yScale.y(v);
     grid.appendChild(svgEl("line", {
       x1: 0,
-      x2: 1320,
+      x2: chartRuleWidth,
       y1: y,
       y2: y,
       stroke: COLORS.olive21,
@@ -38124,28 +38191,29 @@ function drawGrid(yScale) {
       class: "fine-line"
     }));
     const label = svgEl("text", {
-      x: 1328,
+      x: axisTickX,
       y: y + 4,
       fill: COLORS.taupe,
       "font-size": 14,
-      "text-anchor": "start"
+      "text-anchor": "start",
+      class: "axis-label"
     });
     label.textContent = formatCount(v);
     grid.appendChild(label);
   }
   const title = svgEl("text", {
-    x: 1308,
+    x: axisTitleX,
     y: TREE_TOP_MIN_Y - 34,
     fill: COLORS.taupe,
-    "font-size": 18,
+    "font-size": 13,
     "text-anchor": "start",
     class: "axis-title"
   });
   title.textContent = "Number of Listens";
   grid.appendChild(title);
   grid.appendChild(svgEl("line", {
-    x1: 1318,
-    x2: 1318,
+    x1: chartWidth,
+    x2: chartWidth,
     y1: TREE_TOP_MIN_Y,
     y2: TREE_BASE_Y,
     stroke: COLORS.olive21,
@@ -38154,7 +38222,7 @@ function drawGrid(yScale) {
   }));
   grid.appendChild(svgEl("line", {
     x1: 0,
-    x2: 1318,
+    x2: chartWidth,
     y1: TREE_BASE_Y,
     y2: TREE_BASE_Y,
     stroke: COLORS.brown50,
@@ -38165,7 +38233,7 @@ function drawGrid(yScale) {
     const y = TIMELINE_TOP_Y + (TIMELINE_HEIGHT * i) / 4;
     grid.appendChild(svgEl("line", {
       x1: 0,
-      x2: 1320,
+      x2: chartRuleWidth,
       y1: y,
       y2: y,
       stroke: COLORS.olive21,
@@ -38175,13 +38243,21 @@ function drawGrid(yScale) {
     }));
   }
   const timelineLabel = svgEl("text", {
-    x: 8,
-    y: TIMELINE_TOP_Y - 16,
+    x: timelineLabelX,
+    y: TIMELINE_TOP_Y + 8,
     fill: COLORS.taupe,
-    "font-size": 15,
+    "font-size": 13,
+    "text-anchor": "start",
     class: "axis-title"
   });
-  timelineLabel.textContent = "Temporal Topic Distribution";
+  ["Temporal", "Distribution", "of Topics"].forEach((line, index) => {
+    const tspan = svgEl("tspan", {
+      x: timelineLabelX,
+      dy: index === 0 ? 0 : 16
+    });
+    tspan.textContent = line;
+    timelineLabel.appendChild(tspan);
+  });
   grid.appendChild(timelineLabel);
 }
 
@@ -38294,7 +38370,7 @@ function drawEpisodeTree(svg, episode, treeX, yScaleFn, scales) {
     x1: 0,
     x2: 0,
     y1: treeTopY,
-    y2: TIMELINE_TOP_Y + TIMELINE_HEIGHT + 8,
+    y2: TIMELINE_TOP_Y - 6,
     stroke: COLORS.brown50,
     "stroke-width": 0.9,
     opacity: 0.62
@@ -38481,7 +38557,8 @@ function drawMiniTimeline(group, episode) {
 }
 
 function drawEpisodeLabels(group, episode) {
-  const y0 = TIMELINE_TOP_Y + TIMELINE_HEIGHT + 34;
+  const y0 = TIMELINE_TOP_Y + TIMELINE_HEIGHT + 30;
+  const rowGap = 18;
   const label = svgEl("text", {
     x: 0,
     y: y0,
@@ -38495,7 +38572,7 @@ function drawEpisodeLabels(group, episode) {
 
   const guest = svgEl("text", {
     x: 0,
-    y: y0 + 22,
+    y: y0 + rowGap,
     fill: COLORS.darkBrown,
     "font-size": 16,
     "text-anchor": "middle",
@@ -38506,10 +38583,11 @@ function drawEpisodeLabels(group, episode) {
 
   const date = svgEl("text", {
     x: 0,
-    y: y0 + 42,
+    y: y0 + rowGap * 2,
     fill: COLORS.taupe,
-    "font-size": 13,
-    "text-anchor": "middle"
+    "font-size": 12,
+    "text-anchor": "middle",
+    class: "episode-date"
   });
   date.textContent = episode.date || "";
   group.appendChild(date);
@@ -38678,42 +38756,5 @@ init().catch((error) => {
 });
 
 </script>
-  
-<script>
-(() => {
-  const fallbackUrl = "s8e1/index.html";
-  const svg = document.getElementById("vizSvg");
-  if (!svg) return;
-
-  const episodeUrl = (tree) => tree?.dataset?.episodeUrl || fallbackUrl;
-
-  const markTrees = () => {
-    svg.querySelectorAll(".episode-tree").forEach((tree) => {
-      tree.style.cursor = "pointer";
-      tree.setAttribute("role", "link");
-      tree.setAttribute("tabindex", "0");
-      const episodeId = tree.dataset.episodeId || "episode";
-      tree.setAttribute("aria-label", "Open " + episodeId + " episode dashboard");
-    });
-  };
-
-  svg.addEventListener("click", (event) => {
-    const tree = event.target.closest?.(".episode-tree");
-    if (tree) window.location.href = episodeUrl(tree);
-  });
-
-  svg.addEventListener("keydown", (event) => {
-    const tree = event.target.closest?.(".episode-tree");
-    if (!tree) return;
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      window.location.href = episodeUrl(tree);
-    }
-  });
-
-  markTrees();
-  new MutationObserver(markTrees).observe(svg, { childList: true, subtree: true });
-})();
-</script>
-</body>
+  </body>
 </html>
