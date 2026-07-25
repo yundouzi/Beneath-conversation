@@ -38756,5 +38756,42 @@ init().catch((error) => {
 });
 
 </script>
-  </body>
+  
+<script>
+(() => {
+  const fallbackUrl = "s8e1/index.html";
+  const svg = document.getElementById("vizSvg");
+  if (!svg) return;
+
+  const episodeUrl = (tree) => tree?.dataset?.episodeUrl || fallbackUrl;
+
+  const markTrees = () => {
+    svg.querySelectorAll(".episode-tree").forEach((tree) => {
+      tree.style.cursor = "pointer";
+      tree.setAttribute("role", "link");
+      tree.setAttribute("tabindex", "0");
+      const episodeId = tree.dataset.episodeId || "episode";
+      tree.setAttribute("aria-label", "Open " + episodeId + " episode dashboard");
+    });
+  };
+
+  svg.addEventListener("click", (event) => {
+    const tree = event.target.closest?.(".episode-tree");
+    if (tree) window.location.href = episodeUrl(tree);
+  });
+
+  svg.addEventListener("keydown", (event) => {
+    const tree = event.target.closest?.(".episode-tree");
+    if (!tree) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      window.location.href = episodeUrl(tree);
+    }
+  });
+
+  markTrees();
+  new MutationObserver(markTrees).observe(svg, { childList: true, subtree: true });
+})();
+</script>
+</body>
 </html>

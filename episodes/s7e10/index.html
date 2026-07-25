@@ -31,6 +31,7 @@
   --text: #584216;
   --taupe: #A29479;
   --purple: #995A91;
+  --scale: 1;
 }
 
 * {
@@ -46,7 +47,17 @@ body,
   color: var(--text);
   font-family: var(--font-light);
   font-synthesis: none;
+}
+
+html,
+body {
   overflow-x: hidden;
+  overflow-y: auto;
+}
+
+#app {
+  position: relative;
+  width: 100%;
 }
 
 button,
@@ -58,10 +69,12 @@ input {
 .stage {
   --content-shift: 0px;
   position: relative;
-  width: 100vw;
+  width: 1920px;
   min-height: calc(1715px + var(--content-shift));
   background: var(--bg);
   overflow: hidden;
+  transform: scale(var(--scale));
+  transform-origin: top left;
 }
 
 .font-warning {
@@ -87,7 +100,7 @@ input {
   position: absolute;
   left: 0;
   top: calc(182px + var(--content-shift));
-  width: 100vw;
+  width: 1920px;
   height: 828.644px;
   background: var(--overlay);
 }
@@ -104,7 +117,7 @@ input {
   position: absolute;
   left: 0;
   top: 0;
-  width: calc(100vw - 56px);
+  width: calc(1920px - 56px);
 }
 
 .episode-title {
@@ -119,9 +132,13 @@ input {
   text-overflow: ellipsis;
 }
 
+.episode-title--split {
+  white-space: normal;
+}
+
 .episode-intro {
   margin: 6px 0 0 0;
-  width: calc(100vw - 56px);
+  width: calc(1920px - 56px);
   font-family: var(--font-light);
   font-size: 13px;
   line-height: 1.15;
@@ -249,7 +266,7 @@ input {
 }
 
 .legend-row.topic-row {
-  max-width: calc(100vw - 260px);
+  max-width: calc(1920px - 260px);
 }
 
 .legend-item {
@@ -427,7 +444,7 @@ input {
   position: absolute;
   left: 155px;
   top: calc(309px + var(--content-shift));
-  width: calc(100vw - 155px);
+  width: calc(1920px - 155px);
   height: 645px;
   overflow-x: auto;
   overflow-y: hidden;
@@ -570,6 +587,38 @@ tbody td {
   min-width: 210px;
 }
 
+.cluster-table {
+  table-layout: fixed;
+}
+
+.cluster-table th:nth-child(1),
+.cluster-table td:nth-child(1),
+.cluster-table th:nth-child(2),
+.cluster-table td:nth-child(2),
+.cluster-table th:nth-child(3),
+.cluster-table td:nth-child(3) {
+  width: 112px;
+}
+
+.cluster-table th:nth-child(4),
+.cluster-table td:nth-child(4) {
+  width: 130px;
+}
+
+.cluster-table th:nth-child(5),
+.cluster-table td:nth-child(5) {
+  width: 78px;
+}
+
+.cluster-table th:nth-child(6),
+.cluster-table td:nth-child(6) {
+  width: 92px;
+}
+
+.cluster-table .cluster-cell {
+  min-width: 0;
+}
+
 .cluster-chip {
   flex: 0 0 auto;
   width: 14px;
@@ -607,6 +656,7 @@ const COLORS = {
 };
 
 const LAYOUT = {
+  baseWidth: 1920,
   plotHeight: 645,
   chartLeft: 0,
   sentimentTop: 0,
@@ -633,6 +683,15 @@ const state = {
 
 function pxPerSec() {
   return LAYOUT.basePxPerSec * state.zoom;
+}
+
+function currentStageScale() {
+  const raw = getComputedStyle(document.documentElement).getPropertyValue("--scale");
+  return Number.parseFloat(raw) || 1;
+}
+
+function localScrollerX(event, rect) {
+  return (event.clientX - rect.left) / currentStageScale();
 }
 
 function displayTimeForAudioTime(audioTime) {
@@ -703,6 +762,7 @@ function renderApp(data) {
   stage.appendChild(renderBottomPanels(data));
   stage.appendChild(renderTooltip());
   app.appendChild(stage);
+  resizeStage();
   applyIntroLayout(stage);
   checkFonts();
   wireInteractions();
@@ -725,11 +785,13 @@ function checkFonts() {
     const ok = document.fonts.check('12px "Frutiger LT Pro 45 Light"') && document.fonts.check('12px "Frutiger LT Pro 67 Bold Condensed"');
     document.getElementById("font-warning")?.classList.toggle("hidden", ok);
     applyIntroLayout(document.querySelector(".stage"));
+    resizeStage();
   });
 }
 
 function applyIntroLayout(stage) {
   if (!stage) return;
+  fitEpisodeTitle(stage);
   const intro = stage.querySelector(".episode-intro");
   if (!intro) return;
   const headerTop = 24;
@@ -738,12 +800,54 @@ function applyIntroLayout(stage) {
   const introBottom = headerTop + intro.offsetTop + intro.scrollHeight;
   const shift = Math.max(0, Math.ceil(introBottom + desiredGap - baseLegendTop));
   stage.style.setProperty("--content-shift", `${shift}px`);
+  resizeStage();
+}
+
+function renderEpisodeTitle(titleText) {
+  const title = el("h1", "episode-title", titleText);
+  const pipeMatch = titleText.match(/\s+\|\s+|丨/);
+  if (pipeMatch) {
+    const index = pipeMatch.index;
+    title.dataset.titleLead = titleText.slice(0, index).trim();
+    title.dataset.titleRest = titleText.slice(index + pipeMatch[0].length).trim();
+  }
+  return title;
+}
+
+function fitEpisodeTitle(stage) {
+  const title = stage.querySelector(".episode-title");
+  const actions = stage.querySelector(".header-actions");
+  if (!title || !actions) return;
+  const lead = title.dataset.titleLead;
+  const rest = title.dataset.titleRest;
+  if (!lead || !rest) return;
+
+  title.classList.remove("episode-title--split");
+  title.textContent = `${lead} | ${rest}`;
+  const maxWidth = Math.max(900, actions.offsetLeft - 28);
+  title.style.maxWidth = `${maxWidth}px`;
+
+  if (title.scrollWidth > maxWidth) {
+    title.classList.add("episode-title--split");
+    title.textContent = "";
+    title.append(document.createTextNode(lead), document.createElement("br"), document.createTextNode(rest));
+  }
+}
+
+function resizeStage() {
+  const stage = document.querySelector(".stage");
+  const app = document.getElementById("app");
+  if (!stage || !app) return;
+  const scale = window.innerWidth / LAYOUT.baseWidth;
+  document.documentElement.style.setProperty("--scale", String(scale));
+  const stageHeight = stage.scrollHeight || stage.offsetHeight || 0;
+  app.style.height = `${Math.ceil(stageHeight * scale)}px`;
 }
 
 function renderHeader(data) {
   const header = el("header", "header");
   const titleBlock = el("div", "title-block");
-  titleBlock.appendChild(el("h1", "episode-title", data.episode.title));
+  titleBlock.appendChild(renderEpisodeTitle(data.episode.title));
   titleBlock.appendChild(el("p", "episode-intro", data.episode.intro));
 
   const actions = el("div", "header-actions");
@@ -1026,6 +1130,43 @@ function formatAxisNumber(value) {
   return value.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
 }
 
+function formatSigned(value) {
+  const n = Number(value) || 0;
+  return `${n >= 0 ? "+" : ""}${n.toFixed(1)}`;
+}
+
+function formatMetricValue(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "N/A";
+  return n.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+}
+
+function escapeHtml(value = "") {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function sentenceText(s) {
+  return escapeHtml(s.sentence_en || s.representative_sentence_en || "");
+}
+
+function sentimentTooltip(s) {
+  const sentiment = escapeHtml(s.sentiment_en || "Sentiment");
+  return `<strong>${sentiment} (${formatSigned(s.score)})</strong><br>Loudness: ${formatMetricValue(s.loudness)}<br>Pitch: ${formatMetricValue(s.pitch)}<br>${sentenceText(s)}`;
+}
+
+function audioTooltip(s) {
+  const primary = state.variable === "pitch" ? "Pitch" : "Loudness";
+  const secondary = state.variable === "pitch" ? "Loudness" : "Pitch";
+  const primaryKey = state.variable === "pitch" ? "pitch" : "loudness";
+  const secondaryKey = state.variable === "pitch" ? "loudness" : "pitch";
+  return `<strong>${primary}: ${formatMetricValue(s[primaryKey])}</strong><br>${secondary}: ${formatMetricValue(s[secondaryKey])}<br>Sentiment: ${formatSigned(s.score)}<br>${sentenceText(s)}`;
+}
+
 function audioGuides() {
   const stats = audioStats();
   return [
@@ -1050,6 +1191,18 @@ function drawSentimentBars(svg, data) {
       height: h,
       fill: s.speakerColor
     }));
+    const hit = svgEl("rect", {
+      x,
+      y: LAYOUT.sentimentTop,
+      width: Math.max(8, w),
+      height: LAYOUT.sentimentBottom - LAYOUT.sentimentTop,
+      fill: COLORS.text,
+      opacity: 0
+    });
+    hit.addEventListener("mouseenter", (e) => showTooltip(e, sentimentTooltip(s)));
+    hit.addEventListener("mousemove", (e) => moveTooltip(e));
+    hit.addEventListener("mouseleave", hideTooltip);
+    g.appendChild(hit);
   });
   svg.appendChild(g);
 }
@@ -1070,7 +1223,7 @@ function drawAudioLine(svg, data) {
     const v = Number(s[state.variable]);
     if (!Number.isFinite(v)) return;
     const y = audioY(v, stats);
-    points.push({ x: xOf(s.displayMid), y, color: s.speakerColor || COLORS.taupe });
+    points.push({ x: xOf(s.displayMid), y, color: s.speakerColor || COLORS.taupe, sentence: s });
   });
   for (let i = 1; i < points.length; i += 1) {
     const prev = points[i - 1];
@@ -1086,6 +1239,19 @@ function drawAudioLine(svg, data) {
       "stroke-linecap": "round"
     }));
   }
+  points.forEach(({ x, y, sentence }) => {
+    const hit = svgEl("circle", {
+      cx: x,
+      cy: y,
+      r: 10,
+      fill: COLORS.text,
+      opacity: 0
+    });
+    hit.addEventListener("mouseenter", (e) => showTooltip(e, audioTooltip(sentence)));
+    hit.addEventListener("mousemove", (e) => moveTooltip(e));
+    hit.addEventListener("mouseleave", hideTooltip);
+    g.appendChild(hit);
+  });
   svg.appendChild(g);
 }
 
@@ -1147,12 +1313,14 @@ function hideTooltip() {
 
 function wireInteractions() {
   const scroller = state.scroller;
+  window.addEventListener("resize", resizeStage);
   scroller.addEventListener("scroll", updateStickyAxisLabels);
   scroller.addEventListener("click", (event) => {
     if (state.isDragging) return;
     if (!state.audio?.src) return;
     const rect = scroller.getBoundingClientRect();
-    const displayTime = (event.clientX - rect.left + scroller.scrollLeft - LAYOUT.chartLeft) / pxPerSec();
+    const localX = localScrollerX(event, rect);
+    const displayTime = (localX + scroller.scrollLeft - LAYOUT.chartLeft) / pxPerSec();
     state.audio.currentTime = audioTimeForDisplayTime(displayTime);
     updatePlayhead();
   });
@@ -1160,10 +1328,11 @@ function wireInteractions() {
     if (event.ctrlKey) {
       event.preventDefault();
       const rect = scroller.getBoundingClientRect();
-      const anchor = (event.clientX - rect.left + scroller.scrollLeft - LAYOUT.chartLeft) / pxPerSec();
+      const localX = localScrollerX(event, rect);
+      const anchor = (localX + scroller.scrollLeft - LAYOUT.chartLeft) / pxPerSec();
       const old = state.zoom;
       state.zoom = Math.max(LAYOUT.minZoom, Math.min(LAYOUT.maxZoom, state.zoom * (event.deltaY < 0 ? 1.08 : 0.92)));
-      const nextScroll = LAYOUT.chartLeft + anchor * pxPerSec() - (event.clientX - rect.left);
+      const nextScroll = LAYOUT.chartLeft + anchor * pxPerSec() - localX;
       redrawChart();
       scroller.scrollLeft = nextScroll;
       updateStickyAxisLabels();
@@ -1176,13 +1345,13 @@ function wireInteractions() {
   }, { passive: false });
   scroller.addEventListener("pointerdown", (event) => {
     state.isDragging = false;
-    state.dragStartX = event.clientX;
+    state.dragStartX = event.clientX / currentStageScale();
     state.dragScrollLeft = scroller.scrollLeft;
     scroller.setPointerCapture(event.pointerId);
   });
   scroller.addEventListener("pointermove", (event) => {
     if (!scroller.hasPointerCapture(event.pointerId)) return;
-    const dx = event.clientX - state.dragStartX;
+    const dx = event.clientX / currentStageScale() - state.dragStartX;
     if (Math.abs(dx) > 3) {
       state.isDragging = true;
       scroller.classList.add("dragging");
@@ -1231,8 +1400,9 @@ function renderPanel(title, content) {
   return panel;
 }
 
-function makeTable(headers, rows) {
+function makeTable(headers, rows, className = "") {
   const table = document.createElement("table");
+  if (className) table.className = className;
   const thead = document.createElement("thead");
   const trh = document.createElement("tr");
   headers.forEach((h) => trh.appendChild(el("th", "", h)));
@@ -1279,7 +1449,8 @@ function renderClusterTable(rows) {
         `${Math.round(r.proportion * 100)}%`,
         r.representative_sentences_en.join(" ")
       ];
-    })
+    }),
+    "cluster-table"
   );
 }
 
