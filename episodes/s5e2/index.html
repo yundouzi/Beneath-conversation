@@ -1014,6 +1014,7 @@ function drawChart(svg, data, width) {
   drawZeroLine(svg, width);
   drawSentimentBars(svg, data);
   drawAudioLine(svg, data);
+  drawSentenceHoverTargets(svg, data);
   drawEvents(svg, data);
   state.playhead = svgEl("line", { x1: 0, x2: 0, y1: 0, y2: LAYOUT.plotHeight, stroke: COLORS.black, "stroke-width": 2 });
   svg.appendChild(state.playhead);
@@ -1155,9 +1156,14 @@ function sentenceText(s) {
   return escapeHtml(text || "English transcript is not available for this segment.");
 }
 
+function topicClusterText(s) {
+  const label = [s.clusterLabel, s.clusterName].filter(Boolean).join(" ");
+  return escapeHtml(label || `C${s.cluster ?? ""}`);
+}
+
 function sentimentTooltip(s) {
   const sentiment = escapeHtml(s.sentiment_en || "Sentiment");
-  return `<strong>${sentiment} (${formatSigned(s.score)})</strong><br>Loudness: ${formatMetricValue(s.loudness)}<br>Pitch: ${formatMetricValue(s.pitch)}<br>${sentenceText(s)}`;
+  return `<strong>${sentiment} (${formatSigned(s.score)})</strong><br>Loudness: ${formatMetricValue(s.loudness)}<br>Pitch: ${formatMetricValue(s.pitch)}<br>Topic Cluster: ${topicClusterText(s)}<br>${sentenceText(s)}`;
 }
 
 function audioTooltip(s) {
@@ -1165,7 +1171,7 @@ function audioTooltip(s) {
   const secondary = state.variable === "pitch" ? "Loudness" : "Pitch";
   const primaryKey = state.variable === "pitch" ? "pitch" : "loudness";
   const secondaryKey = state.variable === "pitch" ? "loudness" : "pitch";
-  return `<strong>${primary}: ${formatMetricValue(s[primaryKey])}</strong><br>${secondary}: ${formatMetricValue(s[secondaryKey])}<br>Sentiment: ${formatSigned(s.score)}<br>${sentenceText(s)}`;
+  return `<strong>${primary}: ${formatMetricValue(s[primaryKey])}</strong><br>${secondary}: ${formatMetricValue(s[secondaryKey])}<br>Sentiment: ${formatSigned(s.score)}<br>Topic Cluster: ${topicClusterText(s)}<br>${sentenceText(s)}`;
 }
 
 function audioGuides() {
@@ -1192,18 +1198,6 @@ function drawSentimentBars(svg, data) {
       height: h,
       fill: s.speakerColor
     }));
-    const hit = svgEl("rect", {
-      x,
-      y: LAYOUT.sentimentTop,
-      width: Math.max(8, w),
-      height: LAYOUT.sentimentBottom - LAYOUT.sentimentTop,
-      fill: COLORS.text,
-      opacity: 0
-    });
-    hit.addEventListener("mouseenter", (e) => showTooltip(e, sentimentTooltip(s)));
-    hit.addEventListener("mousemove", (e) => moveTooltip(e));
-    hit.addEventListener("mouseleave", hideTooltip);
-    g.appendChild(hit);
   });
   svg.appendChild(g);
 }
@@ -1216,42 +1210,104 @@ function normalize(values, value) {
   return (value - min) / (max - min);
 }
 
-function drawAudioLine(svg, data) {
-  const stats = audioStats(data);
-  const g = svgEl("g");
-  const points = [];
-  data.sentences.forEach((s) => {
-    const v = Number(s[state.variable]);
-    if (!Number.isFinite(v)) return;
-    const y = audioY(v, stats);
-    points.push({ x: xOf(s.displayMid), y, color: s.speakerColor || COLORS.taupe, sentence: s });
-  });
+function linePoints(points) {
+  return points.map((p) => `${p.x},${p.y}`).join(" ");
+}
+
+function interpolatedAudioY(points, x) {
+  if (!points.length) return null;
+  if (x <= points[0].x) return points[0].y;
   for (let i = 1; i < points.length; i += 1) {
     const prev = points[i - 1];
     const next = points[i];
-    g.appendChild(svgEl("line", {
-      x1: prev.x,
-      y1: prev.y,
-      x2: next.x,
-      y2: next.y,
-      stroke: prev.color,
+    if (x <= next.x) {
+      const span = next.x - prev.x;
+      if (span <= 0) return next.y;
+      return prev.y + ((x - prev.x) / span) * (next.y - prev.y);
+    }
+  }
+  return points[points.length - 1].y;
+}
+
+function drawAudioLine(svg, data) {
+  const stats = audioStats(data);
+  const g = svgEl("g");
+  const points = data.sentences
+    .map((s) => {
+      const v = Number(s[state.variable]);
+      if (!Number.isFinite(v)) return null;
+      return { x: xOf(s.displayMid), y: audioY(v, stats), sentence: s };
+    })
+    .filter(Boolean);
+
+  if (points.length > 1) {
+    g.appendChild(svgEl("polyline", {
+      points: linePoints(points),
+      fill: "none",
+      stroke: COLORS.line,
+      "stroke-width": 2.4,
+      "stroke-linejoin": "round",
+      "stroke-linecap": "round",
+      opacity: 0.38
+    }));
+  }
+
+  const midpointXs = points.map((p) => p.x);
+  data.sentences.forEach((s) => {
+    const v = Number(s[state.variable]);
+    if (!Number.isFinite(v)) return;
+    const x1 = xOf(s.displayStart);
+    const x2 = Math.max(x1 + 1, xOf(s.displayEnd));
+    const xs = [x1, ...midpointXs.filter((x) => x > x1 && x < x2), x2]
+      .filter((x, index, arr) => Number.isFinite(x) && (index === 0 || Math.abs(x - arr[index - 1]) > 0.001));
+    const segmentPoints = xs
+      .map((x) => ({ x, y: interpolatedAudioY(points, x) }))
+      .filter((p) => Number.isFinite(p.y));
+    if (segmentPoints.length < 2) return;
+    g.appendChild(svgEl("polyline", {
+      points: linePoints(segmentPoints),
+      fill: "none",
+      stroke: s.speakerColor || COLORS.taupe,
       "stroke-width": 4,
       "stroke-linejoin": "round",
       "stroke-linecap": "round"
     }));
-  }
-  points.forEach(({ x, y, sentence }) => {
-    const hit = svgEl("circle", {
-      cx: x,
-      cy: y,
-      r: 10,
+  });
+  svg.appendChild(g);
+}
+
+function addSentenceHover(hit, tooltip) {
+  hit.addEventListener("mouseenter", (e) => showTooltip(e, tooltip));
+  hit.addEventListener("mousemove", (e) => moveTooltip(e));
+  hit.addEventListener("mouseleave", hideTooltip);
+}
+
+function drawSentenceHoverTargets(svg, data) {
+  const g = svgEl("g", { class: "sentence-hover-targets" });
+  data.sentences.forEach((s) => {
+    const x = xOf(s.displayStart);
+    const w = Math.max(1, (s.displayEnd - s.displayStart) * pxPerSec());
+    const sentimentHit = svgEl("rect", {
+      x,
+      y: LAYOUT.sentimentTop,
+      width: w,
+      height: LAYOUT.sentimentBottom - LAYOUT.sentimentTop,
       fill: COLORS.text,
       opacity: 0
     });
-    hit.addEventListener("mouseenter", (e) => showTooltip(e, audioTooltip(sentence)));
-    hit.addEventListener("mousemove", (e) => moveTooltip(e));
-    hit.addEventListener("mouseleave", hideTooltip);
-    g.appendChild(hit);
+    addSentenceHover(sentimentHit, sentimentTooltip(s));
+    g.appendChild(sentimentHit);
+
+    const audioHit = svgEl("rect", {
+      x,
+      y: LAYOUT.audioTop,
+      width: w,
+      height: LAYOUT.audioBottom - LAYOUT.audioTop,
+      fill: COLORS.text,
+      opacity: 0
+    });
+    addSentenceHover(audioHit, audioTooltip(s));
+    g.appendChild(audioHit);
   });
   svg.appendChild(g);
 }
